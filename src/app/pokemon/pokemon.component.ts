@@ -10,7 +10,7 @@ import { hs } from '../app.utility';
   styleUrls: ['./pokemon.component.scss'],
 })
 export class PokemonComponent implements OnInit {
-  constructor(private route: ActivatedRoute, private pokemon: PokemonService) { }
+  constructor(private route: ActivatedRoute, private pokemon: PokemonService) {}
 
   id: string;
   details: any = {};
@@ -29,38 +29,45 @@ export class PokemonComponent implements OnInit {
   }
 
   private fetch() {
+    this.pokemon.details(this.id).subscribe((res) => {
+      this.details = res;
+      this.stat = this.getStats(res.stats);
+    });
 
-    this.pokemon.details(this.id).subscribe(
-      res => {
-        this.details = res;
-      }
-    );
+    this.pokemon.about(this.id).subscribe((res) => {
+      const _arr: Array<string> = [];
+      this.shape = res.shape.name;
+      this.growthRate = hs(res.growth_rate.name);
 
-    this.pokemon.about(this.id).subscribe(
-      res => {
-        const _arr: Array<string> = [];
-        this.shape = res.shape.name;
-        this.growthRate = hs(res.growth_rate.name);
+      const name: string = `${res.name.charAt(0).toUpperCase()}${res.name.slice(
+        1,
+        res.name.length
+      )}`;
 
-        const name: string = `${res.name.charAt(0).toUpperCase()}${res.name.slice(
-          1,
-          res.name.length
-        )}`;
-
-        res.flavor_text_entries.forEach((entry: any) => {
-          if (entry.language.name === 'en') {
-            _arr.push(
-              entry.flavor_text
-                .replace(/\./gi, '. ')
-                .replace('\n', ' ')
-                .replace(/\s\s+/g, ' ')
-                .replace('POKéMON', 'Pokemon')
-                .replace(new RegExp(name.toUpperCase(), 'g'), name)
-            );
-          }
-        });
-
-        this.about = [...new Set(_arr.slice(0, 5))];
+      res.flavor_text_entries.forEach((entry: any) => {
+        if (entry.language.name === 'en') {
+          _arr.push(
+            entry.flavor_text
+              .replace(/\./gi, '. ')
+              .replace('\n', ' ')
+              .replace(/\s\s+/g, ' ')
+              .replace('POKéMON', 'Pokemon')
+              .replace(new RegExp(name.toUpperCase(), 'g'), name)
+          );
+        }
       });
+
+      this.about = [...new Set(_arr.slice(0, 5))];
+    });
+  }
+
+  private getStats(stats: Array<any>) {
+    const data: any = {};
+
+    stats.forEach(({ base_stat, stat }: any) => {
+      data[stat.name] = base_stat;
+    });
+
+    return data;
   }
 }
